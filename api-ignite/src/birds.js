@@ -1,10 +1,18 @@
 const express = require('express');
 const router = express.Router();
 
-router.get('/', async function(req, res) {
-    await res.send("hello word")
-    return res.status(200).send();
+router.get('/', function(req, res) {
+    
+    return res.json({message: "hello word"})
 })
+
+router.get('/courses', (req, res)=>{
+    return res.json({cursos: {
+        1: "curso1",
+        2: "curso2",
+        3: "curso3"
+    }})
+}) 
 
 module.exports = router;
 
