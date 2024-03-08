@@ -4,6 +4,20 @@ const { v4: uuidv4 } = require('uuid');
 
 const customers = []
 
+function verifyIfExistsAccountCPF(request, response, next){
+    const {cpf} = request.headers;
+
+    const customer = customers.find( (customer) => customer.cpf === cpf)
+
+    if (!customer) {
+        return res.status(400).json({Error: "usuário não existe"})
+    }
+
+    request.customer = customer;
+
+    return next();
+}
+
 router.get('/', (req, res)=>{
     return res.json({message: "bem vindo ao banco UL"})
 })
@@ -31,16 +45,27 @@ router.post('/account', (req, res)=>{
     return res.status(201).send()
 })
 
-router.get('/statement', (req, res)=>{
-    const {cpf} = req.headers;
-
-    const customer = customers.find( (customer) => customer.cpf === cpf)
-
-    if (!customer) {
-        return res.status(400).json({Error: "usuário não existe"})
-    }
+router.get('/statement',verifyIfExistsAccountCPF, (req, res)=>{
+    const {customer} = req;
 
     res.json(customer.statement)
+})
+
+router.post('/deposit', verifyIfExistsAccountCPF, (req, res) => {
+    const {description, amount } = req.body;
+
+    const { customer } = req;
+
+    const statementOperation = {
+        description,
+        amount,
+        date : new Date(),
+        type : "deposit"
+    }
+
+    customer.statement.push(statementOperation)
+
+    return res.status(201).send()
 })
 
 module.exports = router;
