@@ -18,6 +18,19 @@ function verifyIfExistsAccountCPF(request, response, next){
     return next();
 }
 
+function getBulance(statement){
+    const balance = statement.reduce((acc, operation) => {
+        console.log("cheguei")
+        if (operation.type = "credit") {
+            return acc + operation.amount;
+        } else {
+            return acc - operation.amount;
+        }
+    }, 0)
+
+    return balance;
+}
+
 router.get('/', (req, res)=>{
     return res.json({message: "bem vindo ao banco UL"})
 })
@@ -60,12 +73,35 @@ router.post('/deposit', verifyIfExistsAccountCPF, (req, res) => {
         description,
         amount,
         date : new Date(),
-        type : "deposit"
+        type : "credit"
     }
 
     customer.statement.push(statementOperation)
 
     return res.status(201).send()
+})
+
+router.post('/withdraw', verifyIfExistsAccountCPF, (req, res) => {
+    const {amount} = req.body;
+    const {customer} = req;
+    const saldo = getBulance(customer.statement);
+    
+    console.log("cheguei")
+
+    if(saldo >= amount){
+        const statementOperation = {
+            amount,
+            date : new Date(),
+            type : "debito"
+        }
+    
+        customer.statement.push(statementOperation)
+
+        return res.status(201).send()
+    }else{
+        return res.status(400).json(error, "o saldo é insuficiente")
+    }
+
 })
 
 module.exports = router;
