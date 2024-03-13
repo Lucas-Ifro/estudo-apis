@@ -10,7 +10,7 @@ function verifyIfExistsAccountCPF(request, response, next){
     const customer = customers.find( (customer) => customer.cpf === cpf)
 
     if (!customer) {
-        return res.status(400).json({Error: "usuário não existe"})
+        return response.status(400).json({Error: "usuário não existe"})
     }
 
     request.customer = customer;
@@ -20,8 +20,8 @@ function verifyIfExistsAccountCPF(request, response, next){
 
 function getBulance(statement){
     const balance = statement.reduce((acc, operation) => {
-        console.log("cheguei")
-        if (operation.type = "credit") {
+        
+        if (operation.type == "credit") {
             return acc + operation.amount;
         } else {
             return acc - operation.amount;
@@ -35,9 +35,10 @@ router.get('/', (req, res)=>{
     return res.json({message: "bem vindo ao banco UL"})
 })
 
-router.get('/account/', (req, res)=>{
-    const {id} = req.params
-    return res.json(customers[id] || customers)
+router.get('/account',verifyIfExistsAccountCPF, (req, res)=>{
+    const {customer} = req;
+
+    return res.json(customer)
 })
 
 router.post('/account', (req, res)=>{
@@ -85,8 +86,6 @@ router.post('/withdraw', verifyIfExistsAccountCPF, (req, res) => {
     const {amount} = req.body;
     const {customer} = req;
     const saldo = getBulance(customer.statement);
-    
-    console.log("cheguei")
 
     if(saldo >= amount){
         const statementOperation = {
@@ -102,6 +101,47 @@ router.post('/withdraw', verifyIfExistsAccountCPF, (req, res) => {
         return res.status(400).json(error, "o saldo é insuficiente")
     }
 
+})
+
+router.get('/statement/date',verifyIfExistsAccountCPF, (req, res)=>{
+    const {customer} = req;
+    if(customer === undefined){
+        return res.json(Error, "Usuario ll")
+    }
+
+    const {date} = req.query;
+
+    const dateFormat = new Date(date + " 00:00")
+
+    const statement = customer.statement.filter((statement) => statement.date.toDateString() === 
+    new Date(dateFormat).toDateString())
+
+    res.json(statement)
+})
+
+router.put("/account",verifyIfExistsAccountCPF, (req, res) => {
+    const {name} = req.body;
+    const {customer} = req;
+
+    customer.name = name;
+
+    return res.json({message: "Dados do usuário alterados"}).send()
+})
+
+router.delete("/account", verifyIfExistsAccountCPF, (req, res) => {
+    const {customer} = req;
+
+    customers.splice(customer, 1)
+
+    return res.json(customers)
+})
+
+router.get("/balance", verifyIfExistsAccountCPF, (req, res) => {
+    const {customer} = req;
+
+    const balance = getBulance(customer.statement)
+
+    return res.json(balance)
 })
 
 module.exports = router;
