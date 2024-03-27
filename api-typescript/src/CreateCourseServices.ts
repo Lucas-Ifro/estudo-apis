@@ -1,8 +1,13 @@
 
+interface Course{
+  name: string; 
+  duraction?: number; 
+  educator: string
+}
 
 class CrateCourseServices{
 
-  execute(name: string, duraction: number, educator: string){
+  execute({name, duraction = 8, educator}: Course){
     console.log(name, duraction, educator)
   }  
 }
